@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-application-2
+  namespace: namespace-2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo-application-2
+  template:
+    metadata:
+      labels:
+        app: demo-application-2
+    spec:
+        containers:
+        - name: demo-application-2
+          image: <docker_image_to_be_deployed>
+          ports:
+          - containerPort: 8080
+          livenessProbe:
+           httpGet:
+             path: /
+             port: 8080
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: demo-application-2
+  name: demo-application-2
+  namespace: namespace-2
+spec:
+ ports:
+ - name: demo-application-2
+   port: 80
+   targetPort: 8080
+ selector:
+       app: demo-application-2
+
+---
+
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-2
+  namespace: namespace-2
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+spec:
+  tls:
+  - hosts:
+    - demo-application-2.domain.com
+    secretName: ssl-1
+  rules:
+  - host: demo-application-2.domain.com
+    http:
+      paths:
+      - backend:
+          serviceName: demo-application-2
+          servicePort: 80
+
